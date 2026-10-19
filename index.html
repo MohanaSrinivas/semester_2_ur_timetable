@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#173b5c">
+<title>University Timetable Planner</title>
+<style>
+:root{--navy:#173b5c;--teal:#287d8e;--bg:#f3f6fa;--line:#d8e1eb;--ink:#172435;--muted:#5e6c7c;--blue:#dceefa;--yellow:#fff0c2;--red:#b42335}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(120deg,#173b5c,#18758b);color:white;padding:22px max(16px,env(safe-area-inset-left)) 20px}
+header h1{font-size:clamp(1.45rem,5vw,2.15rem);line-height:1.15;margin:0 0 8px}header p{margin:0;color:#e7f3fa}
+main{max-width:1120px;margin:auto;padding:16px;display:grid;gap:16px}
+.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 2px 8px #163b5c0a;min-width:0}
+h2{font-size:1.25rem;margin:0 0 14px}.hint{color:var(--muted);font-size:.92rem}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.field{min-width:0}.field.full{grid-column:1/-1}label{display:block;font-weight:650;font-size:.92rem;margin:0 0 5px}
+input,select,textarea{font:inherit;width:100%;min-width:0;max-width:100%;padding:12px;border:1px solid #bdcbd9;border-radius:11px;background:white;color:var(--ink);min-height:46px}
+textarea{min-height:76px;resize:vertical}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+button,.button{border:0;border-radius:11px;padding:11px 14px;font:600 .96rem system-ui;cursor:pointer;background:#e8eef6;color:#21344a;min-height:44px}
+button.primary{background:var(--navy);color:white}button.danger{background:#fbe7e9;color:#8b1726}button.ghost{background:white;border:1px solid var(--line)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #71b9db;outline-offset:2px}
+.toolbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:12px}.toolbar select{width:auto;flex:1;min-width:140px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.stat{background:#f0f5fa;border:1px solid #dbe6f0;border-radius:13px;padding:11px;min-width:0}.stat strong{display:block;font-size:1.4rem}.stat span{font-size:.83rem;color:var(--muted)}
+.day-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:12px 0}.day-tabs button{padding:9px 3px;min-width:0;font-size:.87rem}.day-tabs button.active{background:var(--teal);color:white}
+.event-list{display:grid;gap:10px}.event{border:1px solid #b9d4e7;border-left:5px solid var(--teal);border-radius:12px;padding:12px;background:var(--blue);min-width:0}.event.warn{background:var(--yellow);border-color:#e7d28d;border-left-color:#c58b12}.event.cancelled{background:#f1f3f5!important;border-color:#adb5bd!important;border-left-color:#6c757d!important;opacity:.88}.event.cancelled h3{text-decoration:line-through;color:#5e6670}.cancelled-label{display:inline-block;background:#842029;color:white;border-radius:6px;padding:3px 7px;font-size:.75rem;font-weight:800;margin:0 0 7px}
+.event-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.event h3{font-size:1rem;line-height:1.25;margin:0 0 5px;overflow-wrap:anywhere}.time{font-weight:750;white-space:nowrap;font-size:.92rem}.meta{font-size:.9rem;margin-top:4px;overflow-wrap:anywhere}.tag{display:inline-block;font-size:.75rem;background:#ffffffb8;border:1px solid #b9c9d8;border-radius:999px;padding:2px 8px;margin:5px 4px 0 0}
+.event-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.event-actions button{padding:7px 10px;min-height:36px;font-size:.85rem}
+.empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed #bdcbd9;border-radius:12px}
+.small{font-size:.82rem;color:var(--muted)}.notice{background:#fff7e5;border:1px solid #efdca0;padding:12px;border-radius:12px;font-size:.9rem;margin-top:12px}
+.list-table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eaf1f6}
+#weekGrid{display:grid;grid-template-columns:65px repeat(5,minmax(120px,1fr));overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:white}
+.grid-head{background:#dcebe8;text-align:center;font-weight:700;padding:10px 4px;border-bottom:1px solid var(--line);font-size:.85rem}
+.time-label{height:58px;padding:4px;color:var(--muted);font-size:.75rem;border-bottom:1px solid #e7edf3}
+.grid-day{position:relative;height:870px;border-left:1px solid var(--line);background:repeating-linear-gradient(to bottom,white 0,white 57px,#e7edf3 58px)}
+.grid-event{position:absolute;left:3px;right:3px;padding:5px;border-radius:7px;background:var(--blue);border:1px solid #b7d4e7;font-size:.75rem;overflow:hidden;overflow-wrap:anywhere}
+footer{padding:4px 16px 24px;text-align:center;color:var(--muted);font-size:.85rem}
+@media(min-width:900px){main{grid-template-columns:minmax(330px,390px) minmax(0,1fr);align-items:start}main>.panel:nth-child(2){grid-column:2;grid-row:1 / span 2}main>.panel:nth-child(3){grid-column:1}}
+@media(max-width:560px){header{padding:18px 16px}main{padding:10px;gap:10px}.panel{padding:13px;border-radius:15px}form{grid-template-columns:minmax(0,1fr)}.field.full{grid-column:auto}.stats{gap:6px}.stat{padding:9px}.stat strong{font-size:1.2rem}.stat span{font-size:.75rem}.toolbar select{width:100%;flex-basis:100%}.day-tabs button{font-size:.78rem}.event-top{display:block}.time{display:block;margin-top:4px}.event-actions button{flex:1}.hide-mobile{display:none}#weekGrid{display:none}}
+</style>
+</head>
+<body>
+<header><h1>University Timetable Planner</h1><p>Add, edit, delete, and organize your recurring classes. Designed for phones and laptops.</p></header>
+<main>
+<section class="panel">
+<h2 id="formTitle">Add a class</h2>
+<form id="classForm">
+<input type="hidden" id="eventId">
+<div class="field full"><label for="name">Course / event name *</label><input id="name" required placeholder="e.g. Complexity Theory"></div>
+<div class="field"><label for="code">Course code</label><input id="code" placeholder="e.g. 70160a"></div>
+<div class="field"><label for="type">Class type</label><select id="type"><option>Lecture</option><option>Exercise</option><option>Lab</option><option>Language course</option><option>Seminar</option><option>Exam</option><option>Other</option></select></div>
+<div class="field"><label for="day">Day</label><select id="day"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
+<div class="field"><label for="color">Card color</label><input id="color" type="color" value="#dceefa" style="padding:5px"></div>
+<div class="field"><label for="start">Start time *</label><input id="start" type="time" value="10:00" required></div>
+<div class="field"><label for="end">End time *</label><input id="end" type="time" value="12:00" required></div>
+<div class="field"><label for="from">Valid from</label><input id="from" type="date" value="2026-10-12"></div>
+<div class="field"><label for="until">Valid until</label><input id="until" type="date" value="2027-02-05"></div>
+<div class="field"><label for="repeat">Repeat</label><select id="repeat"><option>Weekly</option><option>Fortnightly</option><option>Single date</option></select></div>
+<div class="field"><label for="room">Room number</label><input id="room" placeholder="e.g. BA.V03"></div>
+<div class="field full"><label for="location">Building / location</label><input id="location" placeholder="e.g. Bajuwarenstraße 4, BA"></div>
+<div class="field full"><label for="notes">Notes</label><textarea id="notes" placeholder="Status, preparation, alternate-week details, etc."></textarea></div>
+</form>
+<div class="actions"><button class="primary" id="saveBtn" type="button">Save class</button><button id="cancelBtn" type="button" hidden>Cancel edit</button><button class="ghost" id="clearForm" type="button">Clear form</button></div>
+<p class="small">Classes are saved in this browser on this device. Use Export JSON to back them up or move them to another device.</p>
+</section>
+<section class="panel">
+<h2>Weekly schedule</h2>
+<div class="toolbar"><button id="prevWeek">← Previous</button><label for="weekDate" style="margin:0">Week of</label><input id="weekDate" type="date" value="2026-10-19" style="max-width:180px"><button id="nextWeek">Next →</button></div>
+<div class="stats"><div class="stat"><strong id="count">0</strong><span>Classes this week</span></div><div class="stat"><strong id="hours">0 h</strong><span>Scheduled hours</span></div><div class="stat"><strong id="daysCount">0</strong><span>Days with classes</span></div></div>
+<div class="day-tabs" id="dayTabs"></div>
+<div class="toolbar"><input id="search" placeholder="Search course, room, code…" aria-label="Search classes"><select id="filterType" aria-label="Filter class type"><option value="">All class types</option><option>Lecture</option><option>Exercise</option><option>Lab</option><option>Language course</option><option>Seminar</option><option>Exam</option><option>Other</option></select><select id="filterDay" aria-label="Filter weekday"><option value="">All days</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
+<div id="eventList" class="event-list"></div>
+<div id="weekGrid" aria-label="Weekly calendar"></div>
+<div class="actions"><button id="weekViewBtn">Week grid</button><button id="listViewBtn">List view</button></div>
+</section>
+<section class="panel">
+<h2>Manage timetable</h2>
+<div class="actions"><button id="exportJson">Export JSON backup</button><button id="exportCsv">Export CSV</button><button id="importBtn">Import JSON</button><input id="importFile" type="file" accept="application/json,.json" hidden><button id="printBtn">Print / Save PDF</button><button class="danger" id="deleteAll">Delete all classes</button></div>
+<div class="notice">Preloaded classes are based on the timetable screenshots. Yellow cards and notes flag overlapping or uncertain details; please verify these in the university portal.</div>
+</section>
+</main>
+<footer>University timetable · Responsive on mobile and desktop · No account required</footer>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const seed=[
+["Monday","08:30","10:00","Natural Language Engineering I","72014b","Lab","W 1.15","Rechts- und Wirtschaftswissenschaften","Weekly",""],
+["Monday","10:00","12:00","Recommender Systems","73110a","Lecture","ZH 8","Zentrales Hörsaalgebäude (ZHGB)","Weekly",""],
+["Monday","12:00","14:00","Complexity Theory","70160a","Lecture","BA.V03","Bajuwarenstraße 4, BA","Weekly",""],
+["Monday","12:00","14:00","Recommender Systems","73110b","Exercise","Not readable","Not readable","Weekly","Room not legible; overlaps other entries in screenshot"],
+["Monday","12:00","14:00","Natural Language Engineering I","72014a","Lecture","Not readable","Not readable","Weekly","Room not legible; overlaps other entries in screenshot"],
+["Monday","16:00","18:00","Optimization","71160a","Lecture","BA.V11","Bajuwarenstraße 4, BA","Weekly",""],
+["Tuesday","08:30","10:00","German Language Course A2.2","37521","Language course","S 0.14","Sammelgebäude","Weekly","Book: Das Leben A2. Teilband 2"],
+["Tuesday","12:00","14:00","Optimization","71160b","Exercise","BA.V11","Bajuwarenstraße 4, BA","Weekly",""],
+["Tuesday","14:00","16:00","Advanced Algorithms","70150a","Lecture","BA.V11","Bajuwarenstraße 4, BA","Weekly",""],
+["Tuesday","16:00","18:00","Advanced Data Engineering","70250b","Exercise","BA.V11","Bajuwarenstraße 4, BA","Fortnightly","Alternating schedule; confirm even/odd week"],
+["Wednesday","10:00","12:00","Advanced Explainable AI","72350a","Lecture","BA.V11","Bajuwarenstraße 4, BA","Weekly",""],
+["Wednesday","12:00","14:00","Complexity Theory","70160b","Exercise","BA.V03","Bajuwarenstraße 4, BA","Weekly","Check time against the tutorial announcement"],
+["Wednesday","16:00","18:00","Engineering Digital Twins","70460a","Lecture","BA.V11","Bajuwarenstraße 4, BA","Weekly",""],
+["Thursday","08:30","10:00","German Language Course A2.2","37521","Language course","S 0.14","Sammelgebäude","Weekly",""],
+["Thursday","08:30","10:00","Advanced Data Engineering","70250a","Lecture","BA.V11","Bajuwarenstraße 4, BA","Fortnightly","Overlaps German course; verify"],
+["Thursday","12:00","14:00","Advanced Algorithms","70150b","Exercise","BA.V11","Bajuwarenstraße 4, BA","Weekly",""],
+["Thursday","14:00","16:00","Advanced Explainable AI","72350b","Exercise","H401","Bajuwarenstraße 4, BA","Weekly",""],
+["Thursday","16:00","18:00","Engineering Digital Twins","70460b","Exercise","BA.V11","Bajuwarenstraße 4, BA","Weekly",""],
+["Thursday","16:00","18:00","Engineering Digital Twins","70460a","Lecture","BA.V11","Bajuwarenstraße 4, BA","Single date","Only on 2026-10-29"],
+["Friday","12:30","14:00","German Language Course A2.2","37521","Language course","S 0.14","Sammelgebäude","Weekly",""]
+].map((r,i)=>({id:"seed-"+i,day:r[0],start:r[1],end:r[2],name:r[3],code:r[4],type:r[5],room:r[6],location:r[7],repeat:r[8],notes:r[9],color:(r[9].includes("overlap")||r[9].includes("Overlaps")||r[6]==="Not readable")?"#fff0c2":"#dceefa",from:"2026-10-12",until:"2027-02-05"}));
+let classes=[];
+try{const saved=localStorage.getItem("universityTimetable_v4");classes=saved?JSON.parse(saved):seed;if(!Array.isArray(classes))classes=seed}catch(e){classes=seed}
+let selectedDay="Monday",view="list";
+function persist(){try{localStorage.setItem("universityTimetable_v4",JSON.stringify(classes))}catch(e){alert("Could not save to this browser. Please export a JSON backup.")}}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function mins(t){let [h,m]=t.split(":").map(Number);return h*60+m}
+function dateForDay(monday,day){let d=new Date(monday+"T12:00:00");d.setDate(d.getDate()+days.indexOf(day));return d.toISOString().slice(0,10)}
+function mondayOf(dateStr){let d=new Date(dateStr+"T12:00:00");let n=(d.getDay()+6)%7;d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)}
+function inWeek(c,monday){let date=dateForDay(monday,c.day);if(c.repeat==="Single date"){return (c.notes||"").includes(date)||c.from===date||c.until===date}if(c.from&&date<c.from)return false;if(c.until&&date>c.until)return false;if(c.repeat==="Fortnightly"){let start=new Date((c.from||monday)+"T12:00:00"),cur=new Date(date+"T12:00:00");return Math.floor((cur-start)/604800000)%2===0}return true}
+function filtered(){let q=$("search").value.trim().toLowerCase(),typ=$("filterType").value,dayFilter=$("filterDay").value;let monday=mondayOf($("weekDate").value||"2026-10-19");return classes.filter(c=>inWeek(c,monday)&&(!q||[c.name,c.code,c.room,c.location,c.notes,c.type].join(" ").toLowerCase().includes(q))&&(!typ||c.type===typ)&&(!dayFilter||c.day===dayFilter))}
+function render(){
+ const monday=mondayOf($("weekDate").value||"2026-10-19");$("weekDate").value=monday;
+ const week=classes.filter(c=>inWeek(c,monday));const total=week.length;const hrs=week.reduce((s,c)=>s+Math.max(0,mins(c.end)-mins(c.start))/60,0);$("count").textContent=total;$("hours").textContent=hrs.toLocaleString(undefined,{maximumFractionDigits:1})+" h";$("daysCount").textContent=new Set(week.map(c=>c.day)).size;
+ $("dayTabs").innerHTML=days.slice(0,5).map(d=>`<button type="button" class="${selectedDay===d?"active":""}" data-day="${d}">${d.slice(0,3)}</button>`).join("");
+ $("dayTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{selectedDay=b.dataset.day;$("filterDay").value=selectedDay;render()});
+ let items=filtered().filter(c=>c.day===selectedDay).sort((a,b)=>a.start.localeCompare(b.start));
+ const selectedDate=dateForDay(monday,selectedDay);
+ $("eventList").innerHTML=items.length?items.map(c=>{const cancelled=(c.cancelledDates||[]).includes(selectedDate);return `<article class="event ${cancelled?"cancelled":(c.color==="#fff0c2"?"warn":"")}" style="${cancelled?"":"background:"+esc(c.color||"#dceefa")+";border-left-color:"+(c.color==="#fff0c2"?"#c58b12":"#287d8e")}">${cancelled?'<div class="cancelled-label">CANCELLED · '+esc(selectedDate)+'</div>':''}<div class="event-top"><div><h3>${esc(c.name)}</h3><div class="meta">${esc(c.code||"No course code")} · ${esc(c.type)}</div></div><div class="time">${esc(c.start)}–${esc(c.end)}</div></div><div class="meta"><b>Room:</b> ${esc(c.room||"Not specified")}</div><div class="meta"><b>Location:</b> ${esc(c.location||"Not specified")}</div><div><span class="tag">${esc(c.day)}</span><span class="tag">${esc(c.repeat||"Weekly")}</span><span class="tag">Date: ${esc(selectedDate)}</span>${c.from?`<span class="tag">From ${esc(c.from)}</span>`:""}${c.until?`<span class="tag">Until ${esc(c.until)}</span>`:""}</div>${c.notes?`<div class="meta"><b>Notes:</b> ${esc(c.notes)}</div>`:""}<div class="event-actions"><button type="button" data-cancel="${esc(c.id)}">${cancelled?"Undo cancellation":"Mark cancelled today"}</button><button type="button" data-edit="${esc(c.id)}">Edit</button><button type="button" class="danger" data-delete="${esc(c.id)}">Delete</button></div></article>`}).join(""):`<div class="empty">No classes found for ${esc(selectedDay)} in this week. Try another day or add a class above.</div>`;
+ $("eventList").querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>toggleCancellation(b.dataset.cancel,selectedDate));$("eventList").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editClass(b.dataset.edit));$("eventList").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteClass(b.dataset.delete));
+ renderGrid(monday,week);
+ $("weekGrid").style.display=view==="grid"?"grid":"none";$("eventList").style.display=view==="grid"?"none":"grid";
+}
+function renderGrid(monday,week){let g=$("weekGrid");g.innerHTML="";g.style.gridTemplateRows="38px repeat(15,58px)";g.append(Object.assign(document.createElement("div"),{className:"grid-head",textContent:"Time"}));days.slice(0,5).forEach(d=>g.append(Object.assign(document.createElement("div"),{className:"grid-head",textContent:d.slice(0,3)+" "+dateForDay(monday,d).slice(5)})));for(let h=7;h<22;h++){let t=document.createElement("div");t.className="time-label";t.style.gridColumn="1";t.style.gridRow=String(h-7+2);t.textContent=String(h).padStart(2,"0")+":00";g.append(t)}days.slice(0,5).forEach((d,i)=>{let col=document.createElement("div");col.className="grid-day";col.style.gridColumn=String(i+2);col.style.gridRow="2 / span 15";week.filter(c=>c.day===d).forEach(c=>{let e=document.createElement("div");const cancelled=(c.cancelledDates||[]).includes(dateForDay(monday,d));e.className="grid-event";if(cancelled)e.style.textDecoration="line-through";e.style.top=((mins(c.start)-420)/60*58)+"px";e.style.height=Math.max(24,(mins(c.end)-mins(c.start))/60*58-2)+"px";e.style.background=cancelled?"#e2e3e5":(c.color||"#dceefa");e.innerHTML=(cancelled?"<b>CANCELLED</b><br>":"")+"<b>"+esc(c.name)+"</b><br>"+esc(c.start)+"–"+esc(c.end)+"<br>"+esc(c.room||"");col.append(e)});g.append(col)})}
+const fields=["name","code","type","day","color","start","end","from","until","repeat","room","location","notes"];
+function formData(){let o={};fields.forEach(k=>o[k]=$(k).value.trim());o.id=$("eventId").value||"c-"+Date.now()+"-"+Math.random().toString(36).slice(2,7);const previous=classes.find(x=>x.id===o.id);o.cancelledDates=previous?.cancelledDates||[];return o}
+function clearForm(){ $("classForm").reset();$("eventId").value="";$("color").value="#dceefa";$("start").value="10:00";$("end").value="12:00";$("from").value="2026-10-12";$("until").value="2027-02-05";$("formTitle").textContent="Add a class";$("saveBtn").textContent="Save class";$("cancelBtn").hidden=true}
+$("saveBtn").onclick=()=>{let c=formData();if(!c.name){alert("Please enter a course or event name.");$("name").focus();return}if(!c.start||!c.end||mins(c.end)<=mins(c.start)){alert("End time must be later than start time.");return}if(c.from&&c.until&&c.until<c.from){alert("Valid until must be on or after valid from.");return}let i=classes.findIndex(x=>x.id===c.id);if(i>=0)classes[i]=c;else classes.push(c);persist();selectedDay=c.day;$("filterDay").value=c.day;clearForm();render();};
+$("cancelBtn").onclick=clearForm;$("clearForm").onclick=clearForm;
+function editClass(id){let c=classes.find(x=>x.id===id);if(!c)return;fields.forEach(k=>$(k).value=c[k]??"");$("eventId").value=c.id;$("formTitle").textContent="Edit class";$("saveBtn").textContent="Update class";$("cancelBtn").hidden=false;$("name").focus();window.scrollTo({top:0,behavior:"smooth"})}
+function toggleCancellation(id,date){const c=classes.find(x=>x.id===id);if(!c)return;c.cancelledDates=Array.isArray(c.cancelledDates)?c.cancelledDates:[];if(c.cancelledDates.includes(date)){c.cancelledDates=c.cancelledDates.filter(d=>d!==date)}else{c.cancelledDates.push(date)}persist();render()}
+function deleteClass(id){let c=classes.find(x=>x.id===id);if(c&&confirm(`Delete "${c.name}"?`)){classes=classes.filter(x=>x.id!==id);persist();render()}}
+$("prevWeek").onclick=()=>{let d=new Date($("weekDate").value+"T12:00:00");d.setDate(d.getDate()-7);$("weekDate").value=mondayOf(d.toISOString().slice(0,10));render()};
+$("nextWeek").onclick=()=>{let d=new Date($("weekDate").value+"T12:00:00");d.setDate(d.getDate()+7);$("weekDate").value=mondayOf(d.toISOString().slice(0,10));render()};
+["weekDate","search","filterType","filterDay"].forEach(id=>$(id).addEventListener(id==="weekDate"?"change":"input",()=>{if(id==="filterDay"&&$("filterDay").value)selectedDay=$("filterDay").value;render()}));
+$("weekViewBtn").onclick=()=>{view="grid";render()};$("listViewBtn").onclick=()=>{view="list";render()};
+$("exportJson").onclick=()=>download("university-timetable-backup.json",JSON.stringify(classes,null,2),"application/json");
+$("exportCsv").onclick=()=>{let cols=["day","start","end","name","code","type","room","location","repeat","from","until","notes"];let csv=[cols.join(","),...classes.map(c=>cols.map(k=>'"'+String(c[k]??"").replace(/"/g,'""')+'"').join(","))].join("\r\n");download("university-timetable.csv",csv,"text/csv")};
+function download(name,text,type){let a=document.createElement("a"),url=URL.createObjectURL(new Blob([text],{type}));a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let data=JSON.parse(await f.text());if(!Array.isArray(data)||!data.every(c=>c.name&&c.day&&c.start&&c.end))throw Error("Invalid format");if(confirm("Replace your current timetable with this backup?")){classes=data;persist();render()}}catch(err){alert("Could not import this file. Please choose a timetable JSON backup.")}e.target.value=""};
+$("printBtn").onclick=()=>window.print();$("deleteAll").onclick=()=>{if(confirm("Delete every class from this timetable? Export a backup first if needed.")){classes=[];persist();render();clearForm()}};
+render();
+})();
+</script>
+<style>@media print{header,.panel:first-child,.panel:last-child,.toolbar,.day-tabs,.actions,footer{display:none!important}main{display:block;padding:0}.panel{border:0;box-shadow:none}#eventList{display:grid!important}body{background:white}}</style>
+</body></html>
